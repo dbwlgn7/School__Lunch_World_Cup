@@ -6,9 +6,9 @@ import plotly.express as px
 from supabase import create_client, Client
 
 # 페이지 및 테마 설정
-st.set_page_config(page_title="급식 월드컵", page_icon="🍱", layout="wide")
+st.set_page_config(page_title="급식 월드컵", page_icon="🍱", layout="centered")
 
-# 챔피언스 밴달 테마 CSS (3D 입체감, 금빛 네온, 다크 카본 느낌)
+# 챔피언스 밴달 테마 CSS (3D 입체감, 금빛 네온, 다크 카본 느낌, 정렬 개선)
 st.markdown('''
 <style>
 /* 전체 배경: 어두운 카본 느낌의 블랙 */
@@ -32,37 +32,62 @@ h1, h2, h3, h4, h5, p, div, span {
 /* 제목 중앙 정렬 및 챔피언스 스타일 */
 .title-text {
     text-align: center;
-    font-size: 48px;
+    font-size: 42px;
     font-weight: 900;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     color: #fff;
     text-transform: uppercase;
     letter-spacing: 2px;
-    text-shadow: 0 0 20px #d4af37, 0 0 40px #d4af37;
+    text-shadow: 0 0 15px #d4af37, 0 0 30px #d4af37;
 }
 
 .subtitle-text {
     text-align: center;
-    font-size: 24px;
-    margin-bottom: 30px;
+    font-size: 22px;
+    margin-bottom: 40px;
     color: #a0a0a0;
+}
+
+/* 🏆 선택 버튼 컨테이너 (정렬 개선) */
+.menu-card {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 20px 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    text-align: center;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 이모티콘 텍스트 스타일 */
+.emoji-icon {
+    font-size: 80px;
+    margin-bottom: 15px;
+    text-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    line-height: 1;
 }
 
 /* 선택 버튼 3D 스타일링 (밴달의 날카롭고 입체적인 느낌) */
 div.stButton > button {
-    background: linear-gradient(135deg, #111 0%, #222 100%);
+    background: linear-gradient(135deg, #181818 0%, #2a2a2a 100%);
     color: #d4af37 !important;
     border: 1px solid #333;
     border-top: 2px solid #d4af37;
     border-radius: 8px;
     padding: 15px;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 800;
     width: 100%;
-    height: 80px;
+    height: auto;
+    min-height: 60px;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,255,0.1);
-    text-transform: uppercase;
+    white-space: normal;
+    word-break: keep-all;
 }
 
 /* 호버 시 챔피언스 오라 이펙트 */
@@ -79,16 +104,6 @@ div.stButton > button:active {
     box-shadow: 0 5px 10px rgba(0,0,0,0.5);
 }
 
-/* 카드 컨테이너 (이미지 및 버튼 래퍼) */
-.menu-card {
-    background: #111;
-    border: 1px solid #222;
-    border-radius: 12px;
-    padding: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-    text-align: center;
-}
-
 /* 챔피언스 빛나는 박스 */
 .glow-box {
     background: rgba(20, 20, 20, 0.8);
@@ -100,17 +115,17 @@ div.stButton > button:active {
 </style>
 ''', unsafe_allow_html=True)
 
-# 후보 및 임시 이미지 (Unsplash 무료 이미지 활용)
+# 후보 및 이모티콘 맵
 CANDIDATES = ['제육볶음', '간장찜닭', '가자미순살튀김', '돈육불백', '미트볼데리야끼볶음', '수육', '진미채고추장볶음', '치즈떡닭갈비']
-IMAGE_MAP = {
-    '제육볶음': 'https://images.unsplash.com/photo-1580651315530-69c8e0026377?auto=format&fit=crop&w=600&q=80',
-    '간장찜닭': 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80',
-    '가자미순살튀김': 'https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?auto=format&fit=crop&w=600&q=80',
-    '돈육불백': 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?auto=format&fit=crop&w=600&q=80',
-    '미트볼데리야끼볶음': 'https://images.unsplash.com/photo-1529042410759-befb1204b468?auto=format&fit=crop&w=600&q=80',
-    '수육': 'https://images.unsplash.com/photo-1514516875953-b265882672fa?auto=format&fit=crop&w=600&q=80',
-    '진미채고추장볶음': 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=600&q=80',
-    '치즈떡닭갈비': 'https://images.unsplash.com/photo-1606851094655-b2524388147d?auto=format&fit=crop&w=600&q=80'
+EMOJI_MAP = {
+    '제육볶음': '🔥🐷',
+    '간장찜닭': '🍗🤎',
+    '가자미순살튀김': '🐟🍤',
+    '돈육불백': '🍖🧅',
+    '미트볼데리야끼볶음': '🧆✨',
+    '수육': '🥓🥬',
+    '진미채고추장볶음': '🦑🌶️',
+    '치즈떡닭갈비': '🧀🥘'
 }
 
 # Supabase 연결 설정
@@ -133,7 +148,7 @@ def show_analytics():
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("🔄 최신 결과 불러오기", key="refresh_stats"):
-            pass # 클릭 시 자동 rerun 되므로 데이터 새로 고침됨
+            pass 
             
     try:
         response = supabase.table("menu_duels").select("id, game_id, round, left_menu, right_menu, winner").execute()
@@ -144,8 +159,6 @@ def show_analytics():
             return
             
         df = pd.DataFrame(data)
-        
-        # 기본 정보 계산
         total_records = len(df)
         total_games = df['game_id'].nunique()
         
@@ -156,10 +169,8 @@ def show_analytics():
         </div>
         ''', unsafe_allow_html=True)
         
-        # 통계 딕셔너리 초기화
         stats = {menu: {'대결 수': 0, '승리 수': 0, '우승 횟수': 0} for menu in CANDIDATES}
         
-        # 데이터 집계
         for _, row in df.iterrows():
             l_menu = row['left_menu']
             r_menu = row['right_menu']
@@ -173,31 +184,22 @@ def show_analytics():
                 if rnd == '결승':
                     stats[win]['우승 횟수'] += 1
                     
-        # 데이터프레임 변환 및 승률 계산
         stats_df = pd.DataFrame.from_dict(stats, orient='index').reset_index()
         stats_df.rename(columns={'index': '반찬 이름'}, inplace=True)
         
-        def calc_win_rate(row):
-            if row['대결 수'] == 0:
-                return '아직 알 수 없음'
-            return (row['승리 수'] / row['대결 수']) * 100
-            
         stats_df['승률(%)_raw'] = stats_df.apply(lambda r: (r['승리 수'] / r['대결 수'] * 100) if r['대결 수'] > 0 else -1, axis=1)
         stats_df['승률'] = stats_df.apply(lambda r: f"{r['승리 수']/r['대결 수']*100:.1f}%" if r['대결 수'] > 0 else '아직 알 수 없음', axis=1)
         
-        # 정렬 (승률 > 우승 횟수 > 승리 수)
         stats_df = stats_df.sort_values(by=['승률(%)_raw', '우승 횟수', '승리 수'], ascending=[False, False, False])
         
-        # 화면 출력용 DF
         display_df = stats_df[['반찬 이름', '대결 수', '승리 수', '승률', '우승 횟수']].copy()
         display_df.index = range(1, len(display_df) + 1)
         
         st.dataframe(display_df, use_container_width=True)
         
-        # 그래프 생성 (결과가 있는 것만)
         plot_df = stats_df[stats_df['승률(%)_raw'] >= 0].copy()
         if not plot_df.empty:
-            plot_df = plot_df.sort_values(by='승률(%)_raw', ascending=True) # 가로 막대는 밑에서부터 쌓이므로 역순 정렬
+            plot_df = plot_df.sort_values(by='승률(%)_raw', ascending=True)
             fig = px.bar(
                 plot_df, x='승률(%)_raw', y='반찬 이름', orientation='h',
                 title="🏆 반찬별 승률 비교",
@@ -217,7 +219,7 @@ def show_analytics():
         st.error(f"통계 데이터를 조회하는 중 오류가 발생했습니다: {str(e)}")
 
 
-# 게임 초기화 함수
+# 게임 초기화
 def reset_game():
     st.session_state.game_id = str(uuid.uuid4())
     candidates = CANDIDATES.copy()
@@ -231,17 +233,15 @@ def reset_game():
     st.session_state.winner = None
     st.session_state.locked = False
 
-# 초기 상태 세팅
 if 'game_id' not in st.session_state:
     reset_game()
 
-# 메뉴 선택 시 처리 로직
+# 메뉴 선택
 def select_menu(left_menu, right_menu, chosen_menu):
     if st.session_state.locked:
         return
         
     try:
-        # Supabase에 대결 결과 저장
         data, count = supabase.table("menu_duels").insert({
             "game_id": st.session_state.game_id,
             "round": st.session_state.current_round,
@@ -250,7 +250,6 @@ def select_menu(left_menu, right_menu, chosen_menu):
             "winner": chosen_menu
         }).execute()
         
-        # 저장 성공 시 다음 단계로 진행
         st.session_state.next_round_winners.append(chosen_menu)
         st.session_state.current_match_idx += 1
         
@@ -282,7 +281,12 @@ if st.session_state.is_done:
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.image(IMAGE_MAP.get(st.session_state.winner), use_container_width=True)
+        st.markdown(f'''
+        <div class='menu-card'>
+            <div class='emoji-icon'>{EMOJI_MAP.get(st.session_state.winner)}</div>
+        </div>
+        <br>
+        ''', unsafe_allow_html=True)
         if st.button("다시 시작하기", key="restart_btn_end"):
             reset_game()
             st.rerun()
@@ -300,20 +304,17 @@ else:
         
         st.markdown(f"<div class='subtitle-text'>⚡ <b>{st.session_state.current_round}</b> ({st.session_state.current_match_idx + 1}/{len(st.session_state.matches)}) ⚡</div>", unsafe_allow_html=True)
         
-        col1, col_gap, col2 = st.columns([10, 1, 10])
+        # 간격과 비율을 조절하여 버튼 위치 정렬 (가운데 정렬)
+        col1, col_gap, col2 = st.columns([10, 2, 10])
         
         with col1:
-            st.markdown("<div class='menu-card'>", unsafe_allow_html=True)
-            st.image(IMAGE_MAP.get(left_item), use_container_width=True)
+            st.markdown(f"<div class='menu-card'><div class='emoji-icon'>{EMOJI_MAP.get(left_item)}</div></div>", unsafe_allow_html=True)
             if st.button(left_item, key=f"left_{st.session_state.current_round}_{st.session_state.current_match_idx}"):
                 select_menu(left_item, right_item, left_item)
                 st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
             
         with col2:
-            st.markdown("<div class='menu-card'>", unsafe_allow_html=True)
-            st.image(IMAGE_MAP.get(right_item), use_container_width=True)
+            st.markdown(f"<div class='menu-card'><div class='emoji-icon'>{EMOJI_MAP.get(right_item)}</div></div>", unsafe_allow_html=True)
             if st.button(right_item, key=f"right_{st.session_state.current_round}_{st.session_state.current_match_idx}"):
                 select_menu(left_item, right_item, right_item)
                 st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
